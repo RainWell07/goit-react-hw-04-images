@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Searchbar from '../components/mainComponents/Searchbar';
 import ImageGallery from '../components/mainComponents/ImageGallery';
 import Button from '../components/mainComponents/Button';
@@ -8,90 +8,85 @@ import Loader from '../components/mainComponents/Loader';
 import css from '../components/Modules/ImageFinder.module.css';
 import Notiflix from 'notiflix';
 
-class App extends Component {
+const App = () => {
+const [query, setQuery] = useState('');
+const [page, setPage] = useState(1);
+const [perPage] = useState(12);
+const [images, setImages] = useState([]);
+const [isLoading, setIsLoading] = useState(false);
+const [showModal, setShowModal] = useState(false);
+const [selectedImage, setSelectedImage] = useState('');
+const [hasMoreImages, setHasMoreImages] = useState(false);
 
-  state = {
-    query: '',
-    page: 1,
-    perPage: 12,
-    images: [],
-    isLoading: false,
-    showModal: false,
-    selectedImage: '',
-    hasMoreImages: false,
-  };
+const handleSearch = (query) => {
+setQuery(query);
+setPage(1);
+setImages([]);
+setHasMoreImages(false);
+};
 
-  handleSearch = (query) => {
-  this.setState(
-    {query,page: 1, images: [], hasMoreImages: false,},);
-  };
+const handleLoadMore = () => {
+setPage((prevPage) => prevPage + 1);
+};
 
-  handleLoadMore = () => {
-    this.setState(
-      (prevState) => ({ page: prevState.page + 1,}),
-    );
-  };
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query || prevState.page !== this.state.page) {
-      this.fetchImages();
-    }
-    if (prevState.images !== this.state.images) {
-      if (this.state.page > 1) {
-        const scrollOffset = document.documentElement.scrollHeight - window.innerHeight;
-        window.scrollTo({ top: scrollOffset, behavior: 'smooth' });
-      }
-    }
+useEffect(() => {
+const fetchImages = () => {
+  setIsLoading(true);
+  apiHelper
+  .searchImages(query, page, perPage)
+  .then((newImages) => {
+  if (newImages.length === 0 && query.trim() !== '') {
+    Notiflix.Notify.failure('Sorry, nothing was found for your search!');
+    return;
   }
+  const hasMoreImages = newImages.length === perPage;
+  setImages((prevImages) => [...prevImages, ...newImages]);
+  setHasMoreImages(hasMoreImages);})
 
-  fetchImages = () => {
-    const { query, page, perPage } = this.state;
-    this.setState({ isLoading: true });
+ .catch((error) => {
+  console.error(error);
+  })
 
-    apiHelper
-      .searchImages(query, page, perPage)
-      .then((newImages) => {
-        if (newImages.length === 0) {
-          Notiflix.Notify.failure('Sorry, nothing was found for your search!');
-        return;
-        }
-        const hasMoreImages = newImages.length === perPage;
-        this.setState((prevState) => ({ images: [...prevState.images, ...newImages], hasMoreImages,})
-        );
-      })
-      .catch((error) => {
-        console.error(error);
-      })
-      .finally(() => {
-        this.setState({ isLoading: false });
-      });
+  .finally(() => {
+  setIsLoading(false);
+  });
   };
 
-  handleImageClick = (imageUrl) => {
-    this.setState({ showModal: true, selectedImage: imageUrl });
-    document.body.style.overflow = 'hidden';
-  };
+  fetchImages();
+}, [query, page, perPage]);
 
-  handleCloseModal = () => {
-    this.setState({ showModal: false, selectedImage: '' });
-    document.body.style.overflow = 'auto';
-  };
-
-  render() {
-
-    const { images, isLoading, showModal, selectedImage, hasMoreImages } = this.state;
-    const showLoadMoreButton = images.length > 0 && !isLoading && hasMoreImages;
-
-    return (
-      <div className={css.container}>
-        <Searchbar onSearch={this.handleSearch} />
-        <ImageGallery images={images} onImageClick={this.handleImageClick} />
-        {isLoading && <Loader />}
-        {showLoadMoreButton && <Button onClick={this.handleLoadMore}>Load More</Button>}
-        {showModal && <Modal imageUrl={selectedImage} onClose={this.handleCloseModal} />}
-      </div>
-    );
+useEffect(() => {
+  if (images.length > 12) {
+    window.scrollBy({
+      top: 2000 * 2, 
+      behavior: 'smooth',
+    });
   }
-}
+}, [page, images.length]);
+
+
+
+const handleImageClick = (imageUrl) => {
+setShowModal(true);
+setSelectedImage(imageUrl);
+};
+
+const handleCloseModal = () => {
+setShowModal(false);
+setSelectedImage('');
+};
+
+const showLoadMoreButton = images.length > 0 && !isLoading && hasMoreImages;
+
+return (
+<div className={css.container}>
+<Searchbar onSearch={handleSearch} />
+<ImageGallery images={images} onImageClick={handleImageClick} />
+{isLoading && <Loader />}
+{showLoadMoreButton && <Button onClick={handleLoadMore}>Load More</Button>}
+{showModal && <Modal imageUrl={selectedImage} onClose={handleCloseModal} />}
+</div>
+);
+};
 
 export default App;

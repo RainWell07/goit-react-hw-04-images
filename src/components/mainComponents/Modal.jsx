@@ -1,38 +1,33 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import css from '../Modules/ImageFinder.module.css'
 
-class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+const Modal = ({ imageUrl, onClose }) => {
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+useEffect(() => {
+const handleKeyDown = (event) => {
+if (event.key === 'Escape') {
+ onClose();
+}};
 
-  handleKeyDown = (event) => {
-    if (event.key === 'Escape') {
-      this.props.onClose();
-    }
-  };
+window.addEventListener('keydown', handleKeyDown);
+document.body.style.overflow = 'hidden';
 
-  handleClick = (event) => {
-    if (event.target === event.currentTarget) {
-      this.props.onClose();
-    }
-  };
+return () => {
+  window.removeEventListener('keydown', handleKeyDown);
+  document.body.style.overflow = 'auto';
+};
+}, [onClose]);
 
-  render() {
-    const { imageUrl } = this.props;
+const handleClick = (event) => {
+if (event.target === event.currentTarget) {
+onClose();
+}};
 
-    return (
-      <div className={css.Overlay} onClick={this.handleClick}>
-        <div className={css.Modal}>
-          <img src={imageUrl} alt=""/>
-        </div>
-      </div>
-    );
-  }
-}
+return (
+<div className={css.Overlay} onClick={handleClick}>
+<div className={css.Modal}>
+<img src={imageUrl} alt="" /></div>
+</div>
+)};
 
 export default Modal;
