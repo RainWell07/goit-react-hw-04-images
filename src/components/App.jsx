@@ -39,6 +39,7 @@ setIsLoading(true);
   id: image.id,
   webformatURL: image.webformatURL,
   largeImageURL: image.largeImageURL,
+  tags: image.tags,
   }));
  if (newImages.length === 0 && query.trim() !== '') {
    Notiflix.Notify.failure('Sorry, nothing was found for your search!');
