@@ -31,34 +31,38 @@ setPage((prevPage) => prevPage + 1);
 
 useEffect(() => {
 const fetchImages = () => {
-  setIsLoading(true);
-  apiHelper
-  .searchImages(query, page, perPage)
-  .then((newImages) => {
-  if (newImages.length === 0 && query.trim() !== '') {
-    Notiflix.Notify.failure('Sorry, nothing was found for your search!');
-    return;
+setIsLoading(true);
+ apiHelper
+ .searchImages(query, page, perPage)
+ .then((response) => {
+ const newImages = response.map((image) => ({
+  id: image.id,
+  webformatURL: image.webformatURL,
+  largeImageURL: image.largeImageURL,
+  }));
+ if (newImages.length === 0 && query.trim() !== '') {
+   Notiflix.Notify.failure('Sorry, nothing was found for your search!');
+   return;
   }
-  const hasMoreImages = newImages.length === perPage;
+ const hasMoreImages = newImages.length === perPage;
   setImages((prevImages) => [...prevImages, ...newImages]);
-  setHasMoreImages(hasMoreImages);})
-
- .catch((error) => {
+  setHasMoreImages(hasMoreImages);
+  })
+  .catch((error) => {
   console.error(error);
   })
-
   .finally(() => {
   setIsLoading(false);
   });
   };
-
   fetchImages();
 }, [query, page, perPage]);
+
 
 useEffect(() => {
   if (images.length > 12) {
     window.scrollBy({
-      top: 2000 * 2, 
+      top: 2000 * 2,
       behavior: 'smooth',
     });
   }
